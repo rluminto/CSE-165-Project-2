@@ -419,14 +419,13 @@ MonoBehaviour:
   machuPicchuResourcePath: Environment/MachuPicchu/machu_picchu_2
   sceneMachuPicchuObjectName: machu_picchu_2
   disableTestFloor: 1
-  maxSpeed: 46
+  maxSpeed: 42
   minSpeed: 0
-  turnSmoothing: 4
-  throttleSmoothing: 3.5
-  maxTurnDegreesPerSecond: 58
-  highSpeedTurnDegreesPerSecond: 120
-  accelerationMetersPerSecondSquared: 15
-  brakingMetersPerSecondSquared: 21
+  turnSmoothing: 8
+  throttleSmoothing: 6
+  maxTurnDegreesPerSecond: 95
+  accelerationMetersPerSecondSquared: 18
+  brakingMetersPerSecondSquared: 24
 --- !u!4 &1900000003
 Transform:
   m_ObjectHideFlags: 0
