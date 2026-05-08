@@ -10,13 +10,18 @@ namespace AirRace
         public float pinchOpenDistance = 0.1f;
         public float pinchClosedDistance = 0.025f;
         public float viewSwitchThreshold = 0.72f;
+        public float viewSwitchReleaseThreshold = 0.28f;
+        public float viewSwitchReleaseSeconds = 0.18f;
+        public float viewSwitchCooldownSeconds = 0.35f;
 
         readonly List<XRHandSubsystem> m_Subsystems = new List<XRHandSubsystem>();
 
         Transform m_XrOrigin;
         DroneFlightController m_Flight;
         XRHandSubsystem m_Subsystem;
-        bool m_ViewGestureWasHeld;
+        bool m_ViewGestureArmed = true;
+        float m_ViewGestureOpenSince = -1f;
+        float m_LastViewSwitchTime = -999f;
 
         public bool HandsTracked { get; private set; }
         public float Throttle { get; private set; }
@@ -65,13 +70,31 @@ namespace AirRace
             if (m_Subsystem == null)
                 return false;
 
-            var amount = TryGetPinchAmount(m_Subsystem.rightHand, XRHandJointID.ThumbTip, XRHandJointID.MiddleTip, out var pinch)
-                ? pinch
-                : 0f;
-            var held = amount >= viewSwitchThreshold;
-            var pressed = held && !m_ViewGestureWasHeld;
-            m_ViewGestureWasHeld = held;
-            return pressed;
+            if (!TryGetPinchAmount(m_Subsystem.rightHand, XRHandJointID.ThumbTip, XRHandJointID.MiddleTip, out var pinch))
+                return false;
+
+            if (pinch <= viewSwitchReleaseThreshold)
+            {
+                if (m_ViewGestureOpenSince < 0f)
+                    m_ViewGestureOpenSince = Time.unscaledTime;
+
+                if (Time.unscaledTime - m_ViewGestureOpenSince >= viewSwitchReleaseSeconds)
+                    m_ViewGestureArmed = true;
+
+                return false;
+            }
+
+            m_ViewGestureOpenSince = -1f;
+
+            if (pinch < viewSwitchThreshold || !m_ViewGestureArmed)
+                return false;
+
+            if (Time.unscaledTime - m_LastViewSwitchTime < viewSwitchCooldownSeconds)
+                return false;
+
+            m_ViewGestureArmed = false;
+            m_LastViewSwitchTime = Time.unscaledTime;
+            return true;
         }
 
         void FindHandSubsystem()

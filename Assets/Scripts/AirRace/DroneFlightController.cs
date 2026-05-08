@@ -4,15 +4,16 @@ namespace AirRace
 {
     public class DroneFlightController : MonoBehaviour
     {
-        public float maxSpeed = 42f;
+        public float maxSpeed = 46f;
         public float minSpeed = 0f;
-        public float turnSmoothing = 8f;
-        public float throttleSmoothing = 6f;
+        public float turnSmoothing = 4f;
+        public float throttleSmoothing = 3.5f;
         public float crashCooldownSeconds = 3f;
         public float throttleDeadZone = 0.08f;
-        public float maxTurnDegreesPerSecond = 95f;
-        public float accelerationMetersPerSecondSquared = 18f;
-        public float brakingMetersPerSecondSquared = 24f;
+        public float maxTurnDegreesPerSecond = 58f;
+        public float highSpeedTurnDegreesPerSecond = 120f;
+        public float accelerationMetersPerSecondSquared = 15f;
+        public float brakingMetersPerSecondSquared = 21f;
 
         RaceManager m_RaceManager;
         Vector3 m_AimDirection = Vector3.forward;
@@ -21,6 +22,8 @@ namespace AirRace
         bool m_InputValid;
 
         public bool FlightEnabled { get; private set; }
+        public float CurrentSpeed => m_CurrentSpeed;
+        public float Speed01 => maxSpeed <= 0f ? 0f : Mathf.Clamp01(m_CurrentSpeed / maxSpeed);
 
         public void Configure(RaceManager raceManager)
         {
@@ -59,10 +62,11 @@ namespace AirRace
             {
                 var targetRotation = Quaternion.LookRotation(m_AimDirection, Vector3.up);
                 var smoothedRotation = Quaternion.Slerp(transform.rotation, targetRotation, 1f - Mathf.Exp(-turnSmoothing * Time.deltaTime));
+                var speedTurnLimit = Mathf.Lerp(maxTurnDegreesPerSecond, highSpeedTurnDegreesPerSecond, Speed01);
                 transform.rotation = Quaternion.RotateTowards(
                     transform.rotation,
                     smoothedRotation,
-                    maxTurnDegreesPerSecond * Time.deltaTime);
+                    speedTurnLimit * Time.deltaTime);
             }
 
             if (hasThrottle)

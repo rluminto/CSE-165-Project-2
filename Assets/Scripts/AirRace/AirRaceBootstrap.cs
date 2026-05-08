@@ -15,13 +15,14 @@ namespace AirRace
         public bool disableTestFloor = true;
 
         [Header("Flight tuning")]
-        public float maxSpeed = 42f;
+        public float maxSpeed = 46f;
         public float minSpeed = 0f;
-        public float turnSmoothing = 8f;
-        public float throttleSmoothing = 6f;
-        public float maxTurnDegreesPerSecond = 95f;
-        public float accelerationMetersPerSecondSquared = 18f;
-        public float brakingMetersPerSecondSquared = 24f;
+        public float turnSmoothing = 4f;
+        public float throttleSmoothing = 3.5f;
+        public float maxTurnDegreesPerSecond = 58f;
+        public float highSpeedTurnDegreesPerSecond = 120f;
+        public float accelerationMetersPerSecondSquared = 15f;
+        public float brakingMetersPerSecondSquared = 21f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void EnsureBootstrapExists()
@@ -76,6 +77,7 @@ namespace AirRace
             flight.turnSmoothing = turnSmoothing;
             flight.throttleSmoothing = throttleSmoothing;
             flight.maxTurnDegreesPerSecond = maxTurnDegreesPerSecond;
+            flight.highSpeedTurnDegreesPerSecond = highSpeedTurnDegreesPerSecond;
             flight.accelerationMetersPerSecondSquared = accelerationMetersPerSecondSquared;
             flight.brakingMetersPerSecondSquared = brakingMetersPerSecondSquared;
 
@@ -110,6 +112,9 @@ namespace AirRace
             var hud = runtimeRoot.AddComponent<AirRaceHud>();
             hud.Configure(mainCamera.transform);
 
+            var audio = runtimeRoot.AddComponent<AirRaceAudio>();
+            audio.Configure(flight, mainCamera.transform);
+
             var wayfinding = runtimeRoot.AddComponent<WayfindingDisplay>();
             wayfinding.Configure(droneRoot.transform, mainCamera.transform);
 
@@ -117,7 +122,7 @@ namespace AirRace
             viewModes.Configure(input, xrOrigin != null ? xrOrigin.transform : mainCamera.transform, visuals, cockpit);
 
             var race = runtimeRoot.AddComponent<RaceManager>();
-            race.Configure(track, flight, wayfinding, hud, droneRoot.transform);
+            race.Configure(track, flight, wayfinding, hud, audio, droneRoot.transform);
             flight.Configure(race);
         }
 

@@ -20,6 +20,7 @@ namespace AirRace
         DroneFlightController m_Flight;
         WayfindingDisplay m_Wayfinding;
         AirRaceHud m_Hud;
+        AirRaceAudio m_Audio;
         Transform m_Drone;
 
         int m_LastClearedIndex;
@@ -37,12 +38,14 @@ namespace AirRace
             DroneFlightController flight,
             WayfindingDisplay wayfinding,
             AirRaceHud hud,
+            AirRaceAudio audio,
             Transform drone)
         {
             m_Track = track;
             m_Flight = flight;
             m_Wayfinding = wayfinding;
             m_Hud = hud;
+            m_Audio = audio;
             m_Drone = drone;
         }
 
@@ -117,12 +120,14 @@ namespace AirRace
         {
             m_LastClearedIndex = m_TargetIndex;
             m_Hud.SetNotice($"Checkpoint {m_TargetIndex + 1} reached");
+            m_Audio?.PlayCheckpoint();
 
             if (m_TargetIndex >= m_Track.Checkpoints.Count - 1)
             {
                 State = RaceState.Finished;
                 m_Flight.SetFlightEnabled(false);
                 m_Hud.SetNotice($"Finished in {FormatTime(m_ElapsedTime)}");
+                m_Audio?.PlayFinish();
                 return;
             }
 
@@ -135,6 +140,7 @@ namespace AirRace
             State = RaceState.Crashed;
             m_Flight.SetFlightEnabled(false);
             m_Hud.SetNotice($"Crash: {hit.name}");
+            m_Audio?.PlayCrash();
             MoveDroneToCheckpoint(m_LastClearedIndex);
             FaceTarget();
 
@@ -154,10 +160,18 @@ namespace AirRace
             var remaining = seconds;
             while (remaining > 0f)
             {
+                var currentWholeSecond = Mathf.CeilToInt(remaining);
                 m_CountdownRemaining = remaining;
-                m_Hud.SetNotice($"{label}: {Mathf.CeilToInt(remaining)}");
-                yield return null;
-                remaining -= Time.deltaTime;
+                m_Hud.SetNotice($"{label}: {currentWholeSecond}");
+                m_Audio?.PlayCountdownBeep();
+
+                var nextBeepThreshold = currentWholeSecond - 1f;
+                while (remaining > nextBeepThreshold && remaining > 0f)
+                {
+                    yield return null;
+                    remaining -= Time.deltaTime;
+                    m_CountdownRemaining = remaining;
+                }
             }
 
             m_CountdownRemaining = 0f;
@@ -174,6 +188,7 @@ namespace AirRace
         void FaceTarget()
         {
             var direction = GetTargetDirection();
+            direction.y = 0f;
             if (direction.sqrMagnitude > 0.001f)
                 m_Drone.rotation = Quaternion.LookRotation(direction, Vector3.up);
         }
